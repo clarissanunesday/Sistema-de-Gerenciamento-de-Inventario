@@ -1,0 +1,125 @@
+ Criar o Banco de Dados
+CREATE DATABASE InventarioArmazem;
+
+-- Usar o banco de dados criado
+USE InventarioArmazem;
+
+-- 2. Criar as Tabelas
+
+-- Tabela de Categorias
+CREATE TABLE Categorias (
+    CategoriaID INT AUTO_INCREMENT PRIMARY KEY,
+    Nome VARCHAR(100) NOT NULL
+);
+
+-- Tabela de Fornecedores
+CREATE TABLE Fornecedores (
+    FornecedorID INT AUTO_INCREMENT PRIMARY KEY,
+    Nome VARCHAR(100) NOT NULL,
+    Contato VARCHAR(100),
+    Endereco TEXT
+);
+
+-- Tabela de Produtos
+CREATE TABLE Produtos (
+    ProdutoID INT AUTO_INCREMENT PRIMARY KEY,
+    Nome VARCHAR(100) NOT NULL,
+    Descricao TEXT,
+    Preco DECIMAL(10, 2) NOT NULL,
+    QuantidadeEmEstoque INT NOT NULL,
+    CategoriaID INT,
+    FOREIGN KEY (CategoriaID) REFERENCES Categorias(CategoriaID)
+);
+
+-- 3. Inserir Dados
+
+-- Inserir dados na tabela Categorias
+INSERT INTO Categorias (Nome) VALUES ('Eletrônicos');
+INSERT INTO Categorias (Nome) VALUES ('Roupas');
+INSERT INTO Categorias (Nome) VALUES ('Alimentos');
+
+-- Inserir dados na tabela Fornecedores
+INSERT INTO Fornecedores (Nome, Contato, Endereco) VALUES ('Fornecedor A', '123-456-7890', 'Rua das Flores, 123');
+INSERT INTO Fornecedores (Nome, Contato, Endereco) VALUES ('Fornecedor B', '234-567-8901', 'Avenida Central, 456');
+INSERT INTO Fornecedores (Nome, Contato, Endereco) VALUES ('Fornecedor C', '345-678-9012', 'Praça da Alegria, 789');
+
+-- Inserir dados na tabela Produtos
+INSERT INTO Produtos (Nome, Descricao, Preco, QuantidadeEmEstoque, CategoriaID) VALUES ('Smartphone', 'Smartphone com 64GB de armazenamento', 799.99, 50, 1);
+INSERT INTO Produtos (Nome, Descricao, Preco, QuantidadeEmEstoque, CategoriaID) VALUES ('Camisa Polo', 'Camisa polo de algodão', 29.99, 100, 2);
+INSERT INTO Produtos (Nome, Descricao, Preco, QuantidadeEmEstoque, CategoriaID) VALUES ('Cereal Matinal', 'Cereal matinal integral', 5.99, 200, 3);
+INSERT INTO Produtos (Nome, Descricao, Preco, QuantidadeEmEstoque, CategoriaID) VALUES ('Televisão 4K', 'Televisão LED 4K de 55 polegadas', 1499.99, 30, 1);
+INSERT INTO Produtos (Nome, Descricao, Preco, QuantidadeEmEstoque, CategoriaID) VALUES ('Calça Jeans', 'Calça jeans masculina', 49.99, 80, 2);
+
+-- 4. Consultar Dados
+
+-- Listar todos os produtos disponíveis em estoque
+SELECT Nome, Descricao, Preco, QuantidadeEmEstoque
+FROM Produtos
+WHERE QuantidadeEmEstoque > 0;
+
+-- Mostrar todos os produtos que pertencem a uma categoria específica (por exemplo, 'Eletrônicos')
+SELECT Nome, Descricao, Preco, QuantidadeEmEstoque
+FROM Produtos
+JOIN Categorias ON Produtos.CategoriaID = Categorias.CategoriaID
+WHERE Categorias.Nome = 'Eletrônicos';
+
+-- Exibir informações sobre os fornecedores que fornecem produtos acima de um determinado preço (por exemplo, acima de 1000)
+-- Adicionar uma coluna FornecedorID na tabela Produtos para relacionar com Fornecedores
+ALTER TABLE Produtos ADD COLUMN FornecedorID INT;
+
+-- Atualizar alguns produtos com FornecedorID
+UPDATE Produtos SET FornecedorID = 1 WHERE Nome = 'Smartphone';
+UPDATE Produtos SET FornecedorID = 2 WHERE Nome = 'Televisão 4K';
+
+-- Consultar fornecedores que fornecem produtos acima de um determinado preço
+SELECT Fornecedores.Nome, Fornecedores.Contato, Fornecedores.Endereco
+FROM Produtos
+JOIN Fornecedores ON Produtos.FornecedorID = Fornecedores.FornecedorID
+WHERE Produtos.Preco > 1000;
+
+-- 5. Atualizar Dados
+
+-- Atualizar o preço de um produto específico (por exemplo, 'Smartphone')
+UPDATE Produtos
+SET Preco = 849.99
+WHERE Nome = 'Smartphone';
+
+-- Modificar a descrição de uma categoria existente (por exemplo, 'Eletrônicos')
+-- Vamos adicionar uma nova coluna Descricao para a tabela Categorias
+ALTER TABLE Categorias ADD COLUMN Descricao TEXT;
+
+-- Atualizar a descrição da categoria 'Eletrônicos'
+UPDATE Categorias
+SET Descricao = 'Produtos eletrônicos variados'
+WHERE Nome = 'Eletrônicos';
+
+-- Atualizar o endereço de um fornecedor específico (por exemplo, 'Fornecedor A')
+UPDATE Fornecedores
+SET Endereco = 'Rua das Flores, 456'
+WHERE Nome = 'Fornecedor A';
+
+-- 6. Deletar Dados
+
+-- Remover um produto do inventário (por exemplo, 'Calça Jeans')
+DELETE FROM Produtos
+WHERE Nome = 'Calça Jeans';
+
+-- Excluir uma categoria, garantindo que os produtos associados sejam atualizados ou removidos conforme necessário
+-- Primeiro, definimos um comportamento de exclusão em cascata na tabela Produtos
+ALTER TABLE Produtos DROP FOREIGN KEY Produtos_ibfk_1; -- Nome do índice pode variar
+ALTER TABLE Produtos ADD CONSTRAINT FK_Categoria
+FOREIGN KEY (CategoriaID) REFERENCES Categorias(CategoriaID) ON DELETE CASCADE;
+
+-- Agora, podemos excluir a categoria (por exemplo, 'Roupas')
+DELETE FROM Categorias
+WHERE Nome = 'Roupas';
+
+-- Apagar um fornecedor, verificando se não há produtos ainda associados a ele
+-- Primeiro, verificamos se o fornecedor está associado a algum produto
+SELECT COUNT(*) AS NumProdutos
+FROM Produtos
+WHERE FornecedorID = (SELECT FornecedorID FROM Fornecedores WHERE Nome = 'Fornecedor C');
+
+-- Se o resultado for 0, podemos deletar o fornecedor
+DELETE FROM Fornecedores
+WHERE Nome = 'Fornecedor C';
